@@ -1,4 +1,4 @@
-module SingularVector
+module SingularVectors
 
 # Write your package code here.
 
