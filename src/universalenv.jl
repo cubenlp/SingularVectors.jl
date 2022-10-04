@@ -7,6 +7,7 @@ using SparseArrays
 
 # Data types
 export SCMat, LieElement, EnvElement, LieAlgebra
+export ObjMatchError
 
 # Constructions
 export commutative_liealgebra, sl2

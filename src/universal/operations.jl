@@ -1,7 +1,7 @@
 # Operations of algebraic structures
 
 # Basic operations
-import Base: +, -, *, ÷, show, getindex
+import Base: +, -, *, ÷, show, getindex, ==, iszero
 
 """
     ObjMatchError <: Exception
@@ -19,7 +19,7 @@ end
 Addition of two elements of the Lie algebra.
 """
 function +(x::LieElement, y::LieElement)
-    x.scmat === y.scmat || ObjMatchError("Addition of elements of different algebras")
+    x.scmat === y.scmat || throw(ObjMatchError("Addition of elements of different algebras"))
     return LieElement(x.scmat, x.element + y.element)
 end
 
@@ -29,9 +29,16 @@ end
 Subtraction of two elements of the Lie algebra.
 """
 function -(x::LieElement, y::LieElement)
-    x.scmat === y.scmat || ObjMatchError("Subtraction of elements of different algebras")
+    x.scmat === y.scmat || throw(ObjMatchError("Subtraction of elements of different algebras"))
     return LieElement(x.scmat, x.element - y.element)
 end
+
+"""
+    -(x::LieElement)
+
+Negation of an element of the Lie algebra.
+"""
+-(x::LieElement) = LieElement(x.scmat, -x.element)
 
 """
     *(a::Int, x::LieElement)
@@ -60,12 +67,15 @@ end
 Multiplication of two elements of the Lie algebra.
 """
 function *(x::LieElement, y::LieElement)
-    x.scmat === y.scmat || ObjMatchError("Multiplication of elements of different algebras")
-    z = sum(val * val2 * scmat[ind, ind2] 
+    x.scmat === y.scmat || throw(ObjMatchError("Multiplication of elements of different algebras"))
+    z = sum(val * val2 * x.scmat[ind, ind2] 
         for (ind, val) in zip(x.element.nzind, x.element.nzval)
             for (ind2, val2) in zip(y.element.nzind, y.element.nzval))
     return LieElement(x.scmat, z)
 end
+
+==(x::LieElement, y::LieElement) = x.scmat === y.scmat && x.element == y.element
+iszero(x::LieElement) = iszero(x.element)
 
 show(io::IO, alg::LieAlgebra) = print(io, "Lie algebra of dimension $(alg.dim)")
 show(io::IO, x::LieElement) = print(io, "Lie element $(x.element)")

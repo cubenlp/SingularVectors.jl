@@ -1,6 +1,5 @@
 using SingularVectors
 using Test
 
-@testset "SingularVectors.jl" begin
-    # Write your tests here.
-end
+# Test for operations
+include("tst_operation.jl")

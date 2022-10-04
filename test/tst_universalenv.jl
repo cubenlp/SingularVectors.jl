@@ -1,1 +1,0 @@
-# Test for universal enveloping algebra

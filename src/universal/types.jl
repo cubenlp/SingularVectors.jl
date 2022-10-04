@@ -43,7 +43,8 @@ struct LieAlgebra
     scmat::SCMat
     basis::Vector{LieElement}
     function LieAlgebra(scmat::SCMat)
-        basis = [LieElement(scmat, sparsevec([i], [1])) for i in 1:scmat.dim]
-        return new(scmat.dim, scmat, basis)
+        dim = scmat.dim
+        basis = [LieElement(scmat, sparsevec([i], [1], dim)) for i in 1:dim]
+        return new(dim, scmat, basis)
     end
 end
