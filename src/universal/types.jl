@@ -29,8 +29,15 @@ An element of the universal enveloping algebra.
 """
 struct EnvElement
     scmat::SCMat
-    # NTuple{N, LieElement{T}} where N
+    # The decomposition basis of element
+    # `keys(element)` is a tuple of indexes
     element::Dict{Tuple, Int}
+    
+    """zero element"""
+    EnvElement(scmat::SCMat) = new(scmat, Dict{Tuple, Int}())
+    EnvElement(scmat::SCMat, element::Dict{Tuple, Int}) = new(scmat, element)
+    """Initialize by a Lie element"""
+    EnvElement(x::LieElement) = new(x.scmat, sparse2dict(x.element))
 end
 
 """

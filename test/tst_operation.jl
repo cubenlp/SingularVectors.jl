@@ -11,6 +11,7 @@
     @test h * e ÷ 2 == e
     @test f * h == 2 * f
     @test h * f == -2 * f
+    @test all(iszero(x - x) for x in [e, h, f])
 
     ## test show
     show(stdout, sl2)

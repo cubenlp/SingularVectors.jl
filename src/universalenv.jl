@@ -12,6 +12,9 @@ export ObjMatchError
 # Constructions
 export commutative_liealgebra, sl2
 
+# tools
+export sparse2dict
+
 # Data types
 include("universal/types.jl")
 

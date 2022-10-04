@@ -1,8 +1,25 @@
 # Operations of algebraic structures
 
 # Basic operations
-import Base: +, -, *, ÷, show, getindex, ==, iszero
+import Base: +, -, *, ÷, show, getindex, ==, iszero, keys, <, one
 
+"""
+    getindex(scmat::SCMat, i::Int, j::Int)
+
+Return the entry at position (i, j) in `scmat.mat`.
+"""
+getindex(scmat::SCMat, i::Int, j::Int) = scmat.mat[i, j]
+
+"""
+    sparse2dict(x::SparseVector)
+
+Convert a sparse vector to a dictionary.
+"""
+function sparse2dict(x::SparseVector)
+    return Dict((i,)=>x[i] for i in findall(!iszero, x))
+end
+
+## Operations for LieElement
 """
     ObjMatchError <: Exception
 
@@ -60,6 +77,13 @@ function ÷(x::LieElement, a::Int)
     return LieElement(x.scmat, x.element .÷ a)
 end
 
+raw"""
+    getindex(x::LieElement, i::Int)
+
+Return the coefficient of $x_i$ in `x`.
+"""
+getindex(x::LieElement, i::Int) = x.element[i]
+
 ## as algebra
 """
     *(x::LieElement, y::LieElement)
@@ -77,8 +101,149 @@ end
 ==(x::LieElement, y::LieElement) = x.scmat === y.scmat && x.element == y.element
 iszero(x::LieElement) = iszero(x.element)
 
+## Operations for EnvElement
+"""
+    keys(x::EnvElement)
+
+Return the decomposition basis of `x`.
+"""
+keys(x::EnvElement) = keys(x.element)
+
+"""
+    getindex(x::EnvElement, key::Tuple)
+
+Return the coefficient of `key` in `x`.
+"""
+getindex(x::EnvElement, key::Tuple) = get(x.element, key, 0)
+
+"""
+    zero(x::EnvElement)
+
+Return the zero element of the same algebra as `x`.
+"""
+zero(x::EnvElement) = EnvElement(x.scmat)
+
+"""
+    one(x::EnvElement)
+
+Return the identity element of the same algebra as `x`.
+"""
+one(x::EnvElement) = EnvElement(x.scmat, Dict{Tuple, Int}(()=>1))
+
+"""
+    +(x::EnvElement, y::EnvElement)
+
+Addition of two elements of the universal enveloping algebra.
+"""
+function +(x::EnvElement, y::EnvElement)
+    x.scmat === y.scmat || throw(ObjMatchError("Addition of elements of different enveloping algebras"))
+    ele = Dict{Tuple, Int}()
+    for k in union(keys(x), keys(y))
+        val = x[k] + y[k]
+        if !iszero(val)
+            ele[k] = val
+        end
+    end
+    return EnvElement(x.scmat, ele)
+end
+
+"""
+    -(x::EnvElement, y::EnvElement)
+
+Subtraction of two elements of the universal enveloping algebra.
+"""
+function -(x::EnvElement, y::EnvElement)
+    x.scmat === y.scmat || throw(ObjMatchError("Subtraction of elements of different enveloping algebras"))
+    ele = Dict{Tuple, Int}()
+    for k in union(keys(x), keys(y))
+        val = x[k] - y[k]
+        if !iszero(val)
+            ele[k] = val
+        end
+    end
+    return EnvElement(x.scmat, ele)
+end
+
+"""
+    -(x::EnvElement)
+
+Negation of an element of the universal enveloping algebra.
+"""
+-(x::EnvElement) = EnvElement(x.scmat, Dict{Tuple, Int}(k => -v for (k, v) in x.element))
+
+"""
+    *(a::Int, x::EnvElement)
+
+Multiplication of an element of the universal enveloping algebra by an integer.
+"""
+function *(a::Int, x::EnvElement)
+    return EnvElement(x.scmat, Dict{Tuple, Int}(k => a * v for (k, v) in x.element))
+end
+*(x::EnvElement, a::Int) = a * x
+
+"""
+    ÷(x::EnvElement, a::Int)
+
+Division of an element of the universal enveloping algebra by an integer.
+"""
+function ÷(x::EnvElement, a::Int)
+    return EnvElement(x.scmat, Dict{Tuple, Int}(k => v ÷ a for (k, v) in x.element))
+end
+
+## **PBW basis**
+
+# @inline tuplejoin(x) = x
+@inline tuplejoin(x, y) = (x..., y...)
+# @inline tuplejoin(x, y, z...) = tuplejoin(tuplejoin(x, y), z...)
+
+"""
+    mult(scmat::SCMat, x::Tuple{LieElement}, y::Tuple{LieElement})
+
+Simplify the product of two basis elements of the universal enveloping algebra.
+"""
+mult(scmat::SCMat, x::Tuple, y::Tuple) = EnvElement(scmat, simplify(scmat, tuplejoin(x, y)))
+
+"""
+    simplify(x::Tuple{LieElement})
+
+Reduce a sequence of `LieElement` to a standard `EnvElement`.
+
+Basic rule: xᵢxⱼ = xⱼxᵢ + [xᵢ, xⱼ]
+
+Example: (1, 3, 2, 1) => (1, 2, 3, 1) + (1, [3, 2], 1)
+"""
+function simplify(scmat::SCMat, x::Tuple)
+    ind = findfirst(i -> x[i] > x[i+1], 1:length(x)-1)
+    isnothing(ind) && return Dict{Tuple, Int}(x=>1)
+    reducecase = simplify(scmat, (x[1:ind-1]..., x[ind+1], x[ind], x[ind+2:end]...))
+    proddict = sparse2dict(scmat[x[ind], x[ind+1]])
+    for k in union(keys(proddict), keys(reducecase))
+        val = get(proddict, k, 0) + get(reducecase, k, 0)
+        if !iszero(val)
+            reducecase[k] = val
+        end
+    end
+    return reducecase
+end
+
+"""
+    *(x::EnvElement, y::EnvElement)
+
+Multiplication of two elements of the universal enveloping algebra.
+"""
+function *(x::EnvElement, y::EnvElement)
+    x.scmat === y.scmat || throw(ObjMatchError("Multiplication of elements of different enveloping algebras"))
+    ele = EnvElement(x.scmat)
+    for k1 in keys(x), k2 in keys(y)
+        coef = x[k1] * y[k2]
+        if !iszero(coef)
+            ele += coef * mult(x.scmat, k1, k2)
+        end
+    end
+    return ele
+end
+
 show(io::IO, alg::LieAlgebra) = print(io, "Lie algebra of dimension $(alg.dim)")
 show(io::IO, x::LieElement) = print(io, "Lie element $(x.element)")
 show(io::IO, scmat::SCMat) = print(io, scmat.mat)
-
-getindex(scmat::SCMat, i::Int, j::Int) = scmat.mat[i, j]
+show(io::IO, x::EnvElement) = print(io, "Env element:\n $(x.element)")
