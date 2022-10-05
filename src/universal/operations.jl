@@ -1,7 +1,7 @@
 # Operations of algebraic structures
 
 # Basic operations
-import Base: +, -, *, ÷, show, getindex, ==, iszero, keys, <, one
+import Base: +, -, *, ÷, show, getindex, ==, iszero, keys
 
 """
     getindex(scmat::SCMat, i::Int, j::Int)
@@ -98,10 +98,11 @@ function *(x::LieElement, y::LieElement)
     return LieElement(x.scmat, z)
 end
 
-==(x::LieElement, y::LieElement) = x.scmat === y.scmat && x.element == y.element
+==(x::LieElement, y::LieElement) = iszero(x - y)
 iszero(x::LieElement) = iszero(x.element)
 
 ## Operations for EnvElement
+
 """
     keys(x::EnvElement)
 
@@ -124,11 +125,11 @@ Return the zero element of the same algebra as `x`.
 zero(x::EnvElement) = EnvElement(x.scmat)
 
 """
-    one(x::EnvElement)
+    unit(x::EnvElement)
 
 Return the identity element of the same algebra as `x`.
 """
-one(x::EnvElement) = EnvElement(x.scmat, Dict{Tuple, Int}(()=>1))
+unit(x::EnvElement) = EnvElement(x.scmat, Dict{Tuple, Int}(()=>1))
 
 """
     +(x::EnvElement, y::EnvElement)
@@ -190,6 +191,20 @@ function ÷(x::EnvElement, a::Int)
     return EnvElement(x.scmat, Dict{Tuple, Int}(k => v ÷ a for (k, v) in x.element))
 end
 
+"""
+    ==(x::EnvElement, y::EnvElement)
+
+Test if two elements of the universal enveloping algebra are equal.
+"""
+==(x::EnvElement, y::EnvElement) = iszero(x - y)
+
+"""
+    iszero(x::EnvElement)
+
+Test if an element of the universal enveloping algebra is zero.
+"""
+iszero(x::EnvElement) = all(iszero, values(x.element))
+
 ## **PBW basis**
 
 # @inline tuplejoin(x) = x
@@ -243,7 +258,8 @@ function *(x::EnvElement, y::EnvElement)
     return ele
 end
 
-show(io::IO, alg::LieAlgebra) = print(io, "Lie algebra of dimension $(alg.dim)")
+# should be replaced by Symbolic.jl
+show(io::IO, alg::AlgebraBySC) = print(io, "Lie algebra of dimension $(alg.dim)")
 show(io::IO, x::LieElement) = print(io, "Lie element $(x.element)")
 show(io::IO, scmat::SCMat) = print(io, scmat.mat)
 show(io::IO, x::EnvElement) = print(io, "Env element:\n $(x.element)")

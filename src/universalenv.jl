@@ -6,7 +6,7 @@ module UniversalEnvelope
 using SparseArrays
 
 # Data types
-export SCMat, LieElement, EnvElement, LieAlgebra
+export SCMat, LieElement, EnvElement, AlgebraBySC
 export ObjMatchError
 
 # Constructions

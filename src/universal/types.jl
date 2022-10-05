@@ -41,15 +41,15 @@ struct EnvElement
 end
 
 """
-    LieAlgebra
+    AlgebraBySC
 
-Data type of Lie algebras.
+Define an algebra by structure constants.
 """
-struct LieAlgebra
+struct AlgebraBySC
     dim::Int
     scmat::SCMat
     basis::Vector{LieElement}
-    function LieAlgebra(scmat::SCMat)
+    function AlgebraBySC(scmat::SCMat)
         dim = scmat.dim
         basis = [LieElement(scmat, sparsevec([i], [1], dim)) for i in 1:dim]
         return new(dim, scmat, basis)
