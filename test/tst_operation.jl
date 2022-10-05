@@ -6,8 +6,8 @@
     scmat = alg.scmat
     ee, hh, ff = EnvElement.(alg.basis)
     # basic operations
-    @test ee + ff == ff + ee
-    @test ee - hh == -(hh - ee)
+    @test ee + ff == ff + ee == f + ee == ee + f
+    @test ee - hh == -(hh - ee) == -(h - ee) == ee - h
     @test ee + hh + (-hh) == ee
     @test ee * (ff + hh) == ee * ff + ee * hh
     @test (ee + hh) * ff == ee * ff + hh * ff
@@ -23,11 +23,12 @@
     @test ff * ee * hh == ff * (ee * hh)
     @test all(iszero, [xx- xx for xx in [ee, hh, ff]])
     # (ff, ee) = (ee, ff) + ([ff, ee],)
-    @test ff * ee == ee * ff + EnvElement(f * e)
+    @test ff * ee == ee * ff + f * e
     # (hh, ff, ee) = (hh, ee, ff) + (hh, [ff, ee])
     #              = (ee, hh, ff) + 2 * (ee, ff) - (hh, hh)
-    @test hh * ff * ee == hh * ee * ff + hh * EnvElement(f * e)
+    @test hh * ff * ee == hh * ee * ff + hh * (f * e)
     @test hh * ff * ee == ee * hh * ff + 2 * ee * ff - hh * hh
+    @test ee * f - f * ee == hh
 end
 
 @testset "Operations for Lie algebra" begin
@@ -50,6 +51,7 @@ end
     show(stdout, sl2) # AlgebraBySC
     show(stdout, e) # LieElement
     show(stdout, sl2.scmat) # SCMat
+    show(stdout, EnvElement(e))
     @test true
 
     ## commutative algebra

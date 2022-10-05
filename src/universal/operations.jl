@@ -256,6 +256,14 @@ function *(x::EnvElement, y::EnvElement)
     return ele
 end
 
+# Treat Lie algebra as a subalgebra of the Enveloping algebra.
+*(x::LieElement, y::EnvElement) = EnvElement(x) * y
+*(x::EnvElement, y::LieElement) = x * EnvElement(y)
++(x::EnvElement, y::LieElement) = x + EnvElement(y)
++(x::LieElement, y::EnvElement) = EnvElement(x) + y
+-(x::EnvElement, y::LieElement) = x - EnvElement(y)
+-(x::LieElement, y::EnvElement) = EnvElement(x) - y
+
 # should be replaced by Symbolic.jl
 show(io::IO, alg::AlgebraBySC) = print(io, "Lie algebra of dimension $(alg.dim)")
 show(io::IO, x::LieElement) = print(io, "Lie element $(x.element)")
