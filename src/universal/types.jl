@@ -29,20 +29,27 @@ An element of the universal enveloping algebra.
 """
 struct EnvElement
     scmat::SCMat
-    # NTuple{N, LieElement{T}} where N
+    # The decomposition basis of element
+    # `keys(element)` is a tuple of indexes
     element::Dict{Tuple, Int}
+    
+    """zero element"""
+    EnvElement(scmat::SCMat) = new(scmat, Dict{Tuple, Int}())
+    EnvElement(scmat::SCMat, element::Dict{Tuple, Int}) = new(scmat, element)
+    """Initialize by a Lie element"""
+    EnvElement(x::LieElement) = new(x.scmat, sparse2dict(x.element))
 end
 
 """
-    LieAlgebra
+    AlgebraBySC
 
-Data type of Lie algebras.
+Define an algebra by structure constants.
 """
-struct LieAlgebra
+struct AlgebraBySC
     dim::Int
     scmat::SCMat
     basis::Vector{LieElement}
-    function LieAlgebra(scmat::SCMat)
+    function AlgebraBySC(scmat::SCMat)
         dim = scmat.dim
         basis = [LieElement(scmat, sparsevec([i], [1], dim)) for i in 1:dim]
         return new(dim, scmat, basis)
