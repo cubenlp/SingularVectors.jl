@@ -9,6 +9,11 @@ struct SCMat # <: AbstractArray
     dim::Int
     # Matrix{SparseVector}
     mat::AbstractMatrix
+    function SCMat(mat::AbstractMatrix{T}) where T<: AbstractSparseVector
+        dim = size(mat, 1)
+        dim == size(mat, 2) || throw(DimensionMismatch("The matrix is not square"))
+        return new(dim, mat)
+    end
 end
 
 """

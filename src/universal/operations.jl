@@ -92,10 +92,11 @@ Multiplication of two elements of the Lie algebra.
 """
 function *(x::LieElement, y::LieElement)
     x.scmat === y.scmat || throw(ObjMatchError("Multiplication of elements of different algebras"))
-    z = sum(val * val2 * x.scmat[ind, ind2] 
-        for (ind, val) in zip(x.element.nzind, x.element.nzval)
-            for (ind2, val2) in zip(y.element.nzind, y.element.nzval))
-    return LieElement(x.scmat, z)
+    scmat = x.scmat
+    z = sum(x[ind] * y[ind2] * scmat[ind, ind2] 
+            for ind in x.element.nzind 
+                for ind2 in y.element.nzind)
+    return LieElement(scmat, z)
 end
 
 ==(x::LieElement, y::LieElement) = iszero(x - y)
@@ -187,9 +188,9 @@ end
 
 Division of an element of the universal enveloping algebra by an integer.
 """
-function ÷(x::EnvElement, a::Int)
-    return EnvElement(x.scmat, Dict{Tuple, Int}(k => v ÷ a for (k, v) in x.element))
-end
+# function ÷(x::EnvElement, a::Int)
+#     return EnvElement(x.scmat, Dict{Tuple, Int}(k => v ÷ a for (k, v) in x.element))
+# end
 
 """
     ==(x::EnvElement, y::EnvElement)
@@ -216,7 +217,7 @@ iszero(x::EnvElement) = all(iszero, values(x.element))
 
 Simplify the product of two basis elements of the universal enveloping algebra.
 """
-mult(scmat::SCMat, x::Tuple, y::Tuple) = EnvElement(scmat, simplify(scmat, tuplejoin(x, y)))
+mult(scmat::SCMat, x::Tuple, y::Tuple) = simplify(scmat, tuplejoin(x, y))
 
 """
     simplify(x::Tuple{LieElement})
@@ -229,16 +230,13 @@ Example: (1, 3, 2, 1) => (1, 2, 3, 1) + (1, [3, 2], 1)
 """
 function simplify(scmat::SCMat, x::Tuple)
     ind = findfirst(i -> x[i] > x[i+1], 1:length(x)-1)
-    isnothing(ind) && return Dict{Tuple, Int}(x=>1)
+    isnothing(ind) && return EnvElement(scmat, Dict{Tuple, Int}(x=>1))
+    # decrease the inversion number by 1
     reducecase = simplify(scmat, (x[1:ind-1]..., x[ind+1], x[ind], x[ind+2:end]...))
-    proddict = sparse2dict(scmat[x[ind], x[ind+1]])
-    for k in union(keys(proddict), keys(reducecase))
-        val = get(proddict, k, 0) + get(reducecase, k, 0)
-        if !iszero(val)
-            reducecase[k] = val
-        end
-    end
-    return reducecase
+    # decrease the length by 1
+    ele = scmat[x[ind], x[ind+1]]
+    return sum([ele[i] * simplify(scmat, (x[1:ind-1]..., i, x[ind+2:end]...)) 
+                for i in ele.nzind]; init=reducecase)
 end
 
 """
@@ -248,7 +246,7 @@ Multiplication of two elements of the universal enveloping algebra.
 """
 function *(x::EnvElement, y::EnvElement)
     x.scmat === y.scmat || throw(ObjMatchError("Multiplication of elements of different enveloping algebras"))
-    ele = EnvElement(x.scmat)
+    ele = zero(x)
     for k1 in keys(x), k2 in keys(y)
         coef = x[k1] * y[k2]
         if !iszero(coef)
