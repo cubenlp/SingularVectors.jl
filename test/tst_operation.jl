@@ -1,4 +1,36 @@
 # Test for operations
+
+@testset "Operations for Universal Envelope" begin
+    alg = AlgebraBySC(sl2scmat)
+    e, h, f = alg.basis
+    scmat = alg.scmat
+    ee, hh, ff = EnvElement.(alg.basis)
+    # basic operations
+    @test ee + ff == ff + ee == f + ee == ee + f
+    @test ee - hh == -(hh - ee) == -(h - ee) == ee - h
+    @test ee + hh + (-hh) == ee
+    @test ee * (ff + hh) == ee * ff + ee * hh
+    @test (ee + hh) * ff == ee * ff + hh * ff
+    @test 2 * (ee + hh) == 2 * ee + 2 * hh == (ee + hh) * 2
+    @test unit(ee) * ee == ee == ee * unit(ee)
+
+    # multiplication
+    @test ee * ff - ff * ee == hh == EnvElement(e * f)
+    @test ee * hh - hh * ee == -2 * ee
+    @test hh * ee - ee * hh == 2 * ee
+    @test hh * ff - ff * hh == -2 * ff
+    @test ff * hh - hh * ff == 2 * ff
+    @test ff * ee * hh == ff * (ee * hh)
+    @test all(iszero, [xx- xx for xx in [ee, hh, ff]])
+    # (ff, ee) = (ee, ff) + ([ff, ee],)
+    @test ff * ee == ee * ff + f * e
+    # (hh, ff, ee) = (hh, ee, ff) + (hh, [ff, ee])
+    #              = (ee, hh, ff) + 2 * (ee, ff) - (hh, hh)
+    @test hh * ff * ee == hh * ee * ff + hh * (f * e)
+    @test hh * ff * ee == ee * hh * ff + 2 * ee * ff - hh * hh
+    @test ee * f - f * ee == hh
+end
+
 @testset "Operations for Lie algebra" begin
     # Test for +, -, *, ÷
     e, h, f = sl2.basis
@@ -19,6 +51,7 @@
     show(stdout, sl2) # AlgebraBySC
     show(stdout, e) # LieElement
     show(stdout, sl2.scmat) # SCMat
+    show(stdout, EnvElement(e))
     @test true
 
     ## commutative algebra
@@ -27,24 +60,4 @@
     @test all(iszero, [x * y, y * x, x * z, z * x, y * z, z * y,
                        x * x, y * y, z * z])
     @test_throws ObjMatchError x * e
-end
-
-@testset "Universal Envelope" begin
-    e, h, f = sl2.basis
-    scmat = sl2.scmat
-    ee, hh, ff = EnvElement.(sl2.basis)
-    @test ee + ff == ff + ee
-    @test ee - hh == -(hh - ee)
-    @test ee + hh + (-hh) == ee
-    @test ee * (ff + hh) == ee * ff + ee * hh
-    @test (ee + hh) * ff == ee * ff + hh * ff
-
-    @test ee * ff - ff * ee == hh
-    @test ee * hh - hh * ee == -2 * ee
-    @test hh * ee - ee * hh == 2 * ee
-    @test hh * ff - ff * hh == -2 * ff
-    @test ff * hh - hh * ff == 2 * ff
-    @test all(iszero, [xx- xx for xx in [ee, hh, ff]])
-    # (ff, ee) = (ee, ff) + ([ff, ee],)
-    @test ff * ee == ee * ff + EnvElement(f * e)
 end

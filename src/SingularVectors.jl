@@ -4,7 +4,7 @@ module SingularVectors
 export SCMat, LieElement, EnvElement, AlgebraBySC, ObjMatchError
 
 # Constructions
-export commutative_liealgebra, sl2
+export commutative_liealgebra, sl2, sl2scmat, unit
 
 # tools
 export sparse2dict
