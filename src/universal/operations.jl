@@ -163,7 +163,7 @@ function -(x::EnvElement{T}, y::EnvElement{T}) where T<:Number
             ele[k] = val
         end
     end
-    return EnvElement{T}(x.scmat, ele)
+    return EnvElement(x.scmat, ele)
 end
 
 """
@@ -266,6 +266,6 @@ end
 
 # should be replaced by Symbolic.jl
 show(io::IO, alg::AlgebraBySC) = print(io, "Lie algebra of dimension $(alg.dim)")
-show(io::IO, x::LieElement) = print(io, "Lie element $(x.element)")
-show(io::IO, scmat::SCMat) = print(io, scmat.mat)
+show(io::IO, x::LieElement) = print(io, sum(x.element .* x.scmat.syms))
+show(io::IO, scmat::SCMat) = print(io, "Structure constants of length $(scmat.dim)")
 show(io::IO, x::EnvElement) = print(io, "Env element:\n $(x.element)")

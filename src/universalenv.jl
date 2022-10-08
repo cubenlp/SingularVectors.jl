@@ -4,6 +4,7 @@
 
 module UniversalEnvelope
 using SparseArrays
+using Symbolics
 
 # Data types
 export SCMat, LieElement, EnvElement, AlgebraBySC

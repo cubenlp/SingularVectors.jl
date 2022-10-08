@@ -1,4 +1,3 @@
-
 # Basic Types
 """
     SCMat{T<:Number}
@@ -9,12 +8,14 @@ struct SCMat{T<:Number} # <: AbstractArray
     dim::Int
     # Matrix{SparseVector}
     mat::AbstractMatrix
+    syms::Vector{Num} # symbolics basis used to show the elements
 end
 
 function SCMat(mat::AbstractMatrix{K}) where K <: AbstractSparseVector{T} where T <: Number
     dim = size(mat, 1)
     dim == size(mat, 2) || throw(DimensionMismatch("The matrix is not square"))
-    return SCMat{T}(dim, mat)
+    syms = eval(Meta.parse("@variables " * join(["x$i" for i in 1:dim], " ")))
+    return SCMat{T}(dim, mat, syms)
 end
 
 
@@ -28,7 +29,6 @@ struct LieElement{T<:Number}
     # vector of coefficients of $\{x_1,\cdots,x_n\}$
     element::SparseVector{T}
 end
-LieElement(scmat::SCMat{T}, element::SparseVector{T}) where T<:Number = LieElement{T}(scmat, element)
 
 """
     EnvElement{T<:Number}
@@ -41,7 +41,6 @@ struct EnvElement{T<:Number}
     # `keys(element)` is a tuple of indexes
     element::Dict{Tuple, T} # base => coefficience
 end
-# EnvElement(scmat::SCMat{T}, element::Dict{Tuple, T}) where T<:Number = EnvElement{T}(scmat, element)
 """zero element"""
 EnvElement(scmat::SCMat{T}) where T<:Number = EnvElement{T}(scmat, Dict{Tuple, T}())
 """Initialize by a Lie element"""
@@ -58,7 +57,7 @@ struct AlgebraBySC{T<:Number}
     basis::Vector{LieElement{T}}
 end
 
-function AlgebraBySC(scmat::SCMat{T}) where T
+function AlgebraBySC(scmat::SCMat{T}) where T <: Number
     dim = scmat.dim
     basis = [LieElement(scmat, sparsevec([i], ones(T, 1), dim)) for i in 1:dim]
     return AlgebraBySC{T}(dim, scmat, basis)

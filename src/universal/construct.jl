@@ -7,7 +7,7 @@ Construct a commutative Lie algebra of dimension `n`.
 """
 function commutative_liealgebra(::Type{T}, n::Int) where T<:Number
     scmat = [spzeros(T, n) for _ in 1:n, _ in 1:n]
-    return AlgebraBySC(SCMat{T}(n, scmat))
+    return AlgebraBySC(SCMat(scmat))
 end
 commutative_liealgebra(n::Int) = commutative_liealgebra(Int, n)
 
