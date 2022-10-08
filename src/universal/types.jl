@@ -41,7 +41,7 @@ struct EnvElement{T<:Number}
     # `keys(element)` is a tuple of indexes
     element::Dict{Tuple, T} # base => coefficience
 end
-EnvElement(scmat::SCMat{T}, element::Dict{Tuple, T}) where T<:Number = EnvElement{T}(scmat, element)
+# EnvElement(scmat::SCMat{T}, element::Dict{Tuple, T}) where T<:Number = EnvElement{T}(scmat, element)
 """zero element"""
 EnvElement(scmat::SCMat{T}) where T<:Number = EnvElement{T}(scmat, Dict{Tuple, T}())
 """Initialize by a Lie element"""

@@ -58,3 +58,18 @@ end
                        x * x, y * y, z * z])
     @test_throws ObjMatchError x * e
 end
+
+@testset "Algebra with parameters" begin
+    scmat = SCMat([spzeros(Num, 3) for _ in 1:3, _ in 1:3])
+    scmat[1, 2][1], scmat[1, 3][2] = -2, 1
+    scmat[2, 1][1], scmat[2, 3][3] = 2, -2
+    scmat[3, 1][2], scmat[3, 2][3] = -1, 2
+    alg = AlgebraBySC(scmat)
+    e, h, f = alg.basis
+    ee, hh, ff = EnvElement.(alg.basis)
+    @test ee * ff - ff * ee == hh == EnvElement(e * f)
+    @variables a b c
+    @test a * e * h == -2a * e
+    @test h * f * b == -2b * f
+    @test a * e * h * f * b == -2a * b * h
+end

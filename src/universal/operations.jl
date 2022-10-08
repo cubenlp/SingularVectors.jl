@@ -65,6 +65,7 @@ Multiplication of an element of the Lie algebra by an integer.
 function *(a::T, x::LieElement{T}) where T<:Number
     return LieElement{T}(x.scmat, a * x.element)
 end
+*(x::LieElement, a::T) where T<:Number = a * x
 
 # """
 #     ÷(x::LieElement, a::Int)
