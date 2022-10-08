@@ -40,12 +40,9 @@ end
     @test all(iszero(x * x) for x in [e, h, f])
     @test e * h == -2 * e
     @test h * e == 2 * e
-    @test h * e ÷ 2 == e
     @test f * h == 2 * f
     @test h * f == -2 * f
     @test all(iszero(x - x) for x in [e, h, f])
-    # discard the remainder without warning
-    @test iszero(e ÷ 2)
 
     ## test show
     show(stdout, sl2) # AlgebraBySC
