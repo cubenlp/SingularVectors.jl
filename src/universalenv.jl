@@ -4,6 +4,7 @@
 
 module UniversalEnvelope
 using SparseArrays
+using Symbolics: map_subscripts, @variables, Num
 
 # Data types
 export SCMat, LieElement, EnvElement, AlgebraBySC
@@ -13,7 +14,7 @@ export ObjMatchError
 export commutative_liealgebra, sl2, sl2scmat, unit
 
 # tools
-export sparse2dict
+export sparse2dict, issortedbypbw
 
 # Data types
 include("universal/types.jl")
