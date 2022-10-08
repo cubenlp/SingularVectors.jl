@@ -24,8 +24,8 @@ getindex(scmat::SCMat, i::Int, j::Int) = scmat.mat[i, j]
 
 Convert a sparse vector to a dictionary.
 """
-function sparse2dict(x::SparseVector)
-    return Dict((i,)=>x[i] for i in findall(!iszero, x))
+function sparse2dict(x::AbstractSparseVector{T}) where T<:Number
+    return Dict{Tuple, T}((i,)=>x[i] for i in findall(!iszero, x))
 end
 
 ## Operations for LieElement
@@ -94,10 +94,13 @@ Multiplication of two elements of the Lie algebra.
 function *(x::LieElement{T}, y::LieElement{T}) where T<:Number
     x.scmat === y.scmat || throw(ObjMatchError("Multiplication of elements of different algebras"))
     scmat = x.scmat
-    z = sum(x[ind] * y[ind2] * scmat[ind, ind2] 
-            for ind in x.element.nzind 
-                for ind2 in y.element.nzind)
-    return LieElement{T}(scmat, z)
+    z = spzeros(T, scmat.dim)
+    for i in x.element.nzind, j in y.element.nzind
+        val = x[i] * y[j]
+        iszero(val) && continue
+        z += val * scmat[i, j]
+    end
+    return LieElement(scmat, z)
 end
 
 ==(x::LieElement, y::LieElement) = iszero(x - y)
@@ -149,6 +152,19 @@ function +(x::EnvElement{T}, y::EnvElement{T}) where T<:Number
     return EnvElement{T}(x.scmat, ele)
 end
 
+"""Addition without creating new memory"""
+function add!(x::EnvElement, y::EnvElement)
+    for k in keys(y)
+        val = x[k] + y[k]
+        if iszero(val)
+            delete!(x.element, k)
+        else
+            x.element[k] = val
+        end
+    end
+    return x
+end
+
 """
     -(x::EnvElement, y::EnvElement)
 
@@ -183,11 +199,19 @@ function *(a::T, x::EnvElement{T}) where T<:Number
 end
 *(x::EnvElement{T}, a::T) where T<:Number = a * x
 
-"""
-    ÷(x::EnvElement, a::Int)
+"""multiplication without creating new memory"""
+function times!(x::EnvElement{T}, a::T) where T<:Number
+    for k in keys(x.element)
+        x.element[k] *= a
+    end
+    return x
+end    
 
-Division of an element of the universal enveloping algebra by an integer.
-"""
+# """
+#     ÷(x::EnvElement, a::Int)
+
+# Division of an element of the universal enveloping algebra by an integer.
+# """
 # function ÷(x::EnvElement, a::Int)
 #     return EnvElement(x.scmat, Dict{Tuple, Int}(k => v ÷ a for (k, v) in x.element))
 # end
@@ -230,13 +254,15 @@ Example: (1, 3, 2, 1) => (1, 2, 3, 1) + (1, [3, 2], 1)
 """
 function simplify(scmat::SCMat{T}, x::Tuple) where T<:Number
     ind = findfirst(i -> x[i] > x[i+1], 1:length(x)-1)
-    isnothing(ind) && return EnvElement{T}(scmat, Dict{Tuple, T}(x=>1))
+    isnothing(ind) && return EnvElement(scmat, Dict{Tuple, T}(x=>1))
     # decrease the inversion number by 1
     reducecase = simplify(scmat, (x[1:ind-1]..., x[ind+1], x[ind], x[ind+2:end]...))
     # decrease the length by 1
     ele = scmat[x[ind], x[ind+1]]
-    return sum([ele[i] * simplify(scmat, (x[1:ind-1]..., i, x[ind+2:end]...)) 
-                for i in ele.nzind]; init=reducecase)
+    for i in ele.nzind
+        add!(reducecase, times!(simplify(scmat, (x[1:ind-1]..., i, x[ind+2:end]...)), ele[i]))
+    end
+    return reducecase
 end
 
 """
@@ -270,6 +296,12 @@ issortedbypbw(x::EnvElement) = all(issorted, keys(x.element))
 +(x::LieElement{T}, y::EnvElement{T}) where T<:Number = EnvElement(x) + y
 -(x::EnvElement{T}, y::LieElement{T}) where T<:Number = x - EnvElement(y)
 -(x::LieElement{T}, y::EnvElement{T}) where T<:Number = EnvElement(x) - y
+
+# element type
+eltype(::EnvElement{T}) where T = T
+eltype(::LieElement{T}) where T = T
+eltype(::SCMat{T}) where T = T
+eltype(::AlgebraBySC{T}) where T = T
 
 # should be replaced by Symbolic.jl
 function show(io::IO, alg::AlgebraBySC)
