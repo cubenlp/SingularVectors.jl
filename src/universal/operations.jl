@@ -256,6 +256,13 @@ function *(x::EnvElement{T}, y::EnvElement{T}) where T<:Number
     return ele
 end
 
+"""
+    issortedbypbw(x::EnvElement)
+
+Test if the key values of the `EnvElement` is sorted by PBW basis.
+"""
+issortedbypbw(x::EnvElement) = all(issorted, keys(x.element))
+
 # Treat Lie algebra as a subalgebra of the Enveloping algebra.
 *(x::LieElement{T}, y::EnvElement{T}) where T<:Number = EnvElement(x) * y
 *(x::EnvElement{T}, y::LieElement{T}) where T<:Number = x * EnvElement(y)
@@ -265,7 +272,28 @@ end
 -(x::LieElement{T}, y::EnvElement{T}) where T<:Number = EnvElement(x) - y
 
 # should be replaced by Symbolic.jl
-show(io::IO, alg::AlgebraBySC) = print(io, "Lie algebra of dimension $(alg.dim)")
+function show(io::IO, alg::AlgebraBySC)
+    txt = "Lie algebra of dimension $(alg.dim) with basis: " * join(string.(alg.basis), ", ")
+    print(io,  txt)
+end
+
 show(io::IO, x::LieElement) = print(io, sum(x.element .* x.scmat.syms))
+
 show(io::IO, scmat::SCMat) = print(io, "Structure constants of length $(scmat.dim)")
-show(io::IO, x::EnvElement) = print(io, "Env element:\n $(x.element)")
+
+"""
+    show(io::IO, x::EnvElement)
+
+Show an element of the universal enveloping algebra.
+
+Note: the output is sorted by dictionary order, not by PBW basis. However, the 
+user should know that it represents the element defined by PBW ordering.
+
+Also, one can use `issortedbypbw` to test if the basis is a standard PBW basis.
+"""
+function show(io::IO, x::EnvElement)
+    # warning: nonstandard ordering !
+    dict, syms = x.element, x.scmat.syms
+    key2sym(key) = prod(syms[i] for i in key)
+    print(io, sum(val * key2sym(k) for (k, val) in dict))
+end

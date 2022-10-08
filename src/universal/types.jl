@@ -14,10 +14,9 @@ end
 function SCMat(mat::AbstractMatrix{K}) where K <: AbstractSparseVector{T} where T <: Number
     dim = size(mat, 1)
     dim == size(mat, 2) || throw(DimensionMismatch("The matrix is not square"))
-    syms = eval(Meta.parse("@variables " * join(["x$i" for i in 1:dim], " ")))
+    syms = eval(Meta.parse("@variables " * join(["x$(map_subscripts(i))" for i in 1:dim], " ")))
     return SCMat{T}(dim, mat, syms)
 end
-
 
 """
     LieElement{T<:Number}

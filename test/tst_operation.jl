@@ -29,6 +29,8 @@
     @test hh * ff * ee == hh * ee * ff + hh * (f * e)
     @test hh * ff * ee == ee * hh * ff + 2 * ee * ff - hh * hh
     @test ee * f - f * ee == hh
+    @test all(issortedbypbw, [ee * ff - ff * ee, hh, ee * hh - hh * ee, -2 * ee,
+          hh * ff - ff * hh, ff * ee * hh, ee * ff + f * e, hh * ff * ee])
 end
 
 @testset "Operations for Lie algebra" begin
