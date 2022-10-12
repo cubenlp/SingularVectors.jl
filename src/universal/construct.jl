@@ -22,3 +22,5 @@ raw"""
 Lie algebra $sl_2$ with chevalley basis $\{e, h, f\}$.
 """
 const sl2 = AlgebraBySC(sl2scmat)
+
+# Construction of Lie superalgebras

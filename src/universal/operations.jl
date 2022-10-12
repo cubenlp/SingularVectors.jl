@@ -80,7 +80,7 @@ getindex(x::AbstractElem, i::Int) = x.element[i]
 
 Multiplication of two elements of the Lie algebra.
 """
-function *(x::LieElem{T}, y::LieElem{T}) where T<:Number
+function *(x::AbstractElem{T}, y::AbstractElem{T}) where T<:Number
     x.scmat === y.scmat || throw(ObjMatchError("Multiplication of elements of different algebras"))
     scmat = x.scmat
     z = spzeros(T, scmat.d)
@@ -89,7 +89,7 @@ function *(x::LieElem{T}, y::LieElem{T}) where T<:Number
         iszero(val) && continue
         z += val * scmat[i, j]
     end
-    return LieElem(scmat, z)
+    return typeof(x)(scmat, z)
 end
 
 ==(x::AbstractElem, y::AbstractElem) = iszero(x - y)
@@ -196,15 +196,6 @@ function times!(x::AbstractEnvElem{T}, a::T) where T<:Number
     return x
 end    
 
-# """
-#     ÷(x::EnvElem, a::Int)
-
-# Division of an element of the universal enveloping algebra by an integer.
-# """
-# function ÷(x::EnvElem, a::Int)
-#     return EnvElem(x.scmat, Dict{Tuple, Int}(k => v ÷ a for (k, v) in x.element))
-# end
-
 """
     ==(x::AbstractEnvElem, y::AbstractEnvElem)
 
@@ -255,11 +246,11 @@ function simplify(scmat::SCMat{T}, x::Tuple) where T<:Number
 end
 
 """
-    *(x::EnvElem, y::EnvElem)
+    *(x::AbstractEnvElem, y::AbstractEnvElem)
 
 Multiplication of two elements of the universal enveloping algebra.
 """
-function *(x::EnvElem{T}, y::EnvElem{T}) where T<:Number
+function *(x::AbstractEnvElem{T}, y::AbstractEnvElem{T}) where T<:Number
     x.scmat === y.scmat || throw(ObjMatchError("Multiplication of elements of different enveloping algebras"))
     ele = zero(x)
     for k1 in keys(x), k2 in keys(y)
@@ -279,12 +270,12 @@ Test if the key values of the `AbstractEnvElem` is sorted by PBW basis.
 issortedbypbw(x::AbstractEnvElem) = all(issorted, keys(x.element))
 
 # Treat Lie algebra as a subalgebra of the Enveloping algebra.
-*(x::AbstractElem{T}, y::AbstractEnvElem{T}) where T<:Number = convert(typeof(y), x) * y
-*(x::AbstractEnvElem{T}, y::AbstractElem{T}) where T<:Number = x * convert(typeof(x), y)
-+(x::AbstractEnvElem{T}, y::AbstractElem{T}) where T<:Number = x + convert(typeof(x), y)
-+(x::AbstractElem{T}, y::AbstractEnvElem{T}) where T<:Number = convert(typeof(y), x) + y
--(x::AbstractEnvElem{T}, y::AbstractElem{T}) where T<:Number = x - convert(typeof(x), y)
--(x::AbstractElem{T}, y::AbstractEnvElem{T}) where T<:Number = convert(typeof(y), x) - y
+*(x::AbstractElem{T}, y::AbstractEnvElem{T}) where T<:Number = oftype(y, x) * y
+*(x::AbstractEnvElem{T}, y::AbstractElem{T}) where T<:Number = x * oftype(x, y)
++(x::AbstractEnvElem{T}, y::AbstractElem{T}) where T<:Number = x + oftype(x, y)
++(x::AbstractElem{T}, y::AbstractEnvElem{T}) where T<:Number = oftype(y, x) + y
+-(x::AbstractEnvElem{T}, y::AbstractElem{T}) where T<:Number = x - oftype(x, y)
+-(x::AbstractElem{T}, y::AbstractEnvElem{T}) where T<:Number = oftype(y, x) - y
 
 # element type
 eltype(::AbstractEnvElem{T}) where T = T
@@ -295,7 +286,7 @@ eltype(::AlgebraBySC{T}) where T = T
 # dimension
 dim(x::AbstractEnvElem) = x.scmat.d
 dim(x::AbstractElem) = x.scmat.d
-dim(x::SCMat) = x.d
+dim(x::AbstractSCMat) = x.d
 dim(x::AlgebraBySC) = x.scmat.d
 
 # should be replaced by Symbolic.jl
@@ -306,7 +297,7 @@ end
 
 show(io::IO, x::AbstractElem) = print(io, sum(x.element .* x.scmat.syms))
 
-show(io::IO, scmat::SCMat) = print(io, "Structure constants of length $(scmat.d)")
+show(io::IO, scmat::AbstractSCMat) = print(io, "Structure constants with dimension $(dim(scmat))")
 
 """
     show(io::IO, x::EnvElem)
@@ -318,8 +309,8 @@ user should know that it represents the element defined by PBW ordering.
 
 Also, one can use `issortedbypbw` to test if the basis is a standard PBW basis.
 """
-function show(io::IO, x::EnvElem)
-    # warning: nonstandard ordering !
+function show(io::IO, x::AbstractEnvElem)
+    # warning: not standard ordering !
     dict, syms = x.element, x.scmat.syms
     key2sym(key) = prod(syms[i] for i in key)
     print(io, sum(val * key2sym(k) for (k, val) in dict))

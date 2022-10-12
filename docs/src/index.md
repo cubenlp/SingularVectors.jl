@@ -12,3 +12,10 @@ Documentation for [SingularVectors](https://github.com/RexWzh/SingularVectors.jl
 ```@autodocs
 Modules = [SingularVectors]
 ```
+
+## Data types
+```@docs
+AbstractElem
+```
+
+## Enveloping algebra of Lie algebra
