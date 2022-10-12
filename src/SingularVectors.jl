@@ -1,7 +1,7 @@
 module SingularVectors
 
 # Data types
-export SCMat, LieElement, EnvElement, AlgebraBySC, ObjMatchError
+export SCMat, LieElem, EnvElem, AlgebraBySC, ObjMatchError
 
 # Constructions
 export commutative_liealgebra, sl2, sl2scmat, unit

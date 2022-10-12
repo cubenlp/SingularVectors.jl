@@ -24,7 +24,7 @@ alg = AlgebraBySC(sl2scmat)
 # elements of lie algebra
 (e, h, f), scmat = alg.basis, alg.scmat
 # elements of the enveloping algebra
-ee, hh, ff = EnvElement.(alg.basis)
+ee, hh, ff = EnvElem.(alg.basis)
 
 # PBW ordering: e < h < f
 # (hh, ff, ee) = (hh, ee, ff) + (hh, [ff, ee])
