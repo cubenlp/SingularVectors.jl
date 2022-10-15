@@ -1,9 +1,9 @@
 # SingularVectors
 
-[![stable](docs-stable-img)](docs-stable-url)
-[![dev](docs-dev-img)](docs-dev-url)
-[![CI](action-img)](action-url)
-[![Coverage](codecov-img)](codecov-url)
+[![][docs-stable-img]][docs-stable-url]
+[![][docs-dev-img]](docs-dev-url)
+[![][action-img]](action-url)
+[![][codecov-img]](codecov-url)
 
 Demo for implementation of Universal Enveloping Algebras, which can be used for finding singular vectors.
 
