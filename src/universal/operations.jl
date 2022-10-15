@@ -95,7 +95,7 @@ end
 ==(x::AbstractElem, y::AbstractElem) = iszero(x - y)
 iszero(x::AbstractElem) = iszero(x.element)
 
-## Operations for EnvElem
+## Operations for LieEnvElem
 """
     keys(x::AbstractEnvElem)
 
@@ -226,7 +226,7 @@ mult(scmat::AbstractSCMat, x::Tuple, y::Tuple) = simplify(scmat, tuplejoin(x, y)
 """
     simplify(scmat::SCMat, x::Tuple)
 
-Reduce a sequence of indexes to the standard `EnvElem`.
+Reduce a sequence of indexes to the standard `LieEnvElem`.
 
 Basic rule: xᵢxⱼ = xⱼxᵢ + [xᵢ, xⱼ]
 
@@ -234,7 +234,7 @@ Example: (1, 3, 2, 1) => (1, 2, 3, 1) + (1, [3, 2], 1)
 """
 function simplify(scmat::SCMat{T}, x::Tuple) where T<:Number
     ind = findfirst(i -> x[i] > x[i+1], 1:length(x)-1)
-    isnothing(ind) && return EnvElem(scmat, Dict{Tuple, T}(x=>one(T)))
+    isnothing(ind) && return LieEnvElem(scmat, Dict{Tuple, T}(x=>one(T)))
     # decrease the inversion number by 1
     reducecase = simplify(scmat, (x[1:ind-1]..., x[ind+1], x[ind], x[ind+2:end]...))
     # decrease the length by 1
@@ -300,7 +300,7 @@ show(io::IO, x::AbstractElem) = print(io, sum(x.element .* x.scmat.syms))
 show(io::IO, scmat::AbstractSCMat) = print(io, "Structure constants with dimension $(dim(scmat))")
 
 """
-    show(io::IO, x::EnvElem)
+    show(io::IO, x::LieEnvElem)
 
 Show an element of the universal enveloping algebra.
 

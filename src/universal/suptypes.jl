@@ -76,7 +76,7 @@ end
 """
     simplify(x::Tuple{LieElem})
 
-Reduce a sequence of `LieElem` to a standard `EnvElem`.
+Reduce a sequence of `LieElem` to a standard `LieEnvElem`.
 
 Basic rule: xᵢxⱼ = (-1)ⁱʲ⋅xⱼxᵢ + [xᵢ, xⱼ]
 

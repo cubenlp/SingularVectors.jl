@@ -4,7 +4,7 @@
     alg = AlgebraBySC(sl2scmat)
     e, h, f = alg.basis
     scmat = alg.scmat
-    ee, hh, ff = EnvElem.(alg.basis)
+    ee, hh, ff = LieEnvElem.(alg.basis)
     # basic operations
     @test ee + ff == ff + ee == f + ee == ee + f
     @test ee - hh == -(hh - ee) == -(h - ee) == ee - h
@@ -15,7 +15,7 @@
     @test unit(ee) * ee == ee == ee * unit(ee)
 
     # multiplication
-    @test ee * ff - ff * ee == hh == EnvElem(e * f)
+    @test ee * ff - ff * ee == hh == LieEnvElem(e * f)
     @test ee * hh - hh * ee == -2 * ee
     @test hh * ee - ee * hh == 2 * ee
     @test hh * ff - ff * hh == -2 * ff
@@ -50,7 +50,7 @@ end
     show(stdout, sl2) # AlgebraBySC
     show(stdout, e) # LieElem
     show(stdout, sl2.scmat) # SCMat
-    show(stdout, EnvElem(e))
+    show(stdout, LieEnvElem(e))
     @test true
 
     ## commutative algebra
@@ -68,8 +68,8 @@ end
     scmat[3, 1][2], scmat[3, 2][3] = -1, 2
     alg = AlgebraBySC(scmat)
     e, h, f = alg.basis
-    ee, hh, ff = EnvElem.(alg.basis)
-    @test ee * ff - ff * ee == hh == EnvElem(e * f)
+    ee, hh, ff = LieEnvElem.(alg.basis)
+    @test ee * ff - ff * ee == hh == LieEnvElem(e * f)
     @variables a b c
     @test a * e * h == -2a * e
     @test h * f * b == -2b * f

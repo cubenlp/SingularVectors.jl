@@ -14,8 +14,16 @@ Modules = [SingularVectors]
 ```
 
 ## Data types
+
+Element types.
+
 ```@docs
 AbstractElem
+LieElem
+SupElem
+AbstractEnvElem
+LieEnvElem
+SupEnvElem
 ```
 
 ## Enveloping algebra of Lie algebra
