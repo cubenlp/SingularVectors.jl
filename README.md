@@ -1,9 +1,9 @@
 # SingularVectors
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://RexWzh.github.io/SingularVectors.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://RexWzh.github.io/SingularVectors.jl/dev)
-[![Build Status](https://github.com/RexWzh/SingularVectors.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/RexWzh/SingularVectors.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/RexWzh/SingularVectors.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/RexWzh/SingularVectors.jl)
+[![stable](docs-stable-img)](docs-stable-url)
+[![dev](docs-dev-img)](docs-dev-url)
+[![CI](action-img)](action-url)
+[![Coverage](codecov-img)](codecov-url)
 
 Demo for implementation of Universal Enveloping Algebras, which can be used for finding singular vectors.
 
@@ -24,7 +24,7 @@ alg = AlgebraBySC(sl2scmat)
 # elements of lie algebra
 (e, h, f), scmat = alg.basis, alg.scmat
 # elements of the enveloping algebra
-ee, hh, ff = EnvElement.(alg.basis)
+ee, hh, ff = EnvElem.(alg.basis)
 
 # PBW ordering: e < h < f
 # (hh, ff, ee) = (hh, ee, ff) + (hh, [ff, ee])
@@ -37,3 +37,17 @@ Notes:
  - Data type `AlgebraBySC` is an analogy of the GAP function `AlgebraByStructureConstants`
  - Element of `SCMat` are `SparseVector`s in order to save memory
  - For simplicity, I use `SCMat` instead of `SCMat{T}` to represent the structure constants array. This should be changed in the later work.
+
+
+<!-- URLS -->
+
+[pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/Q/QRCode.svg
+[pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/report.html
+[action-img]: https://github.com/RexWzh/SingularVectors.jl/actions/workflows/CI.yml/badge.svg
+[action-url]: https://github.com/RexWzh/SingularVectors.jl/actions
+[codecov-img]: https://codecov.io/gh/RexWzh/SingularVectors.jl/branch/main/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/RexWzh/SingularVectors.jl?branch=master
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-stable-url]: https://JuliaImages.github.io/QRCoders.jl/stable
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-dev-url]: https://RexWzh.github.io/SingularVectors.jl/dev

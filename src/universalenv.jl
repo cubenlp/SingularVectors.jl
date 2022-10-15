@@ -7,7 +7,7 @@ using SparseArrays
 using Symbolics: map_subscripts, @variables, Num
 
 # Data types
-export SCMat, LieElement, EnvElement, AlgebraBySC
+export SCMat, LieElem, EnvElem, AlgebraBySC
 export ObjMatchError
 
 # Constructions

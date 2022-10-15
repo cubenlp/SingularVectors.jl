@@ -10,134 +10,126 @@ struct ObjMatchError <: Exception
 end
 
 # Basic operations
-import Base: +, -, *, ÷, show, getindex, ==, iszero, keys
+import Base: +, -, *, ÷, show, getindex, ==, iszero, keys, zero
 
 """
-    getindex(scmat::SCMat, i::Int, j::Int)
+    getindex(scmat::AbstractSCMat, i::Int, j::Int)
 
 Return the entry at position (i, j) in `scmat.mat`.
 """
-getindex(scmat::SCMat, i::Int, j::Int) = scmat.mat[i, j]
+getindex(scmat::AbstractSCMat, i::Int, j::Int) = scmat.mat[i, j]
 
 """
     sparse2dict(x::SparseVector)
 
 Convert a sparse vector to a dictionary.
 """
-function sparse2dict(x::SparseVector)
-    return Dict((i,)=>x[i] for i in findall(!iszero, x))
+function sparse2dict(x::AbstractSparseVector{T}) where T<:Number
+    return Dict{Tuple, T}((i,)=>x[i] for i in findall(!iszero, x))
 end
 
-## Operations for LieElement
+## Operations for AbstractElem
 ## as vector space
 """
-    +(x::LieElement, y::LieElement)
+    +(x::AbstractElem, y::AbstractElem)
 
 Addition of two elements of the Lie algebra.
 """
-function +(x::LieElement{T}, y::LieElement{T}) where T<:Number
+function +(x::AbstractElem{T}, y::AbstractElem{T}) where T<:Number
     x.scmat === y.scmat || throw(ObjMatchError("Addition of elements of different algebras"))
-    return LieElement{T}(x.scmat, x.element + y.element)
+    return typeof(x)(x.scmat, x.element + y.element)
 end
 
 """
-    -(x::LieElement, y::LieElement)
+    -(x::AbstractElem, y::AbstractElem)
 
 Subtraction of two elements of the Lie algebra.
 """
-function -(x::LieElement{T}, y::LieElement{T}) where T<:Number
+function -(x::AbstractElem{T}, y::AbstractElem{T}) where T<:Number
     x.scmat === y.scmat || throw(ObjMatchError("Subtraction of elements of different algebras"))
-    return LieElement{T}(x.scmat, x.element - y.element)
+    return typeof(x)(x.scmat, x.element - y.element)
 end
 
 """
-    -(x::LieElement)
+    -(x::AbstractElem)
 
 Negation of an element of the Lie algebra.
 """
--(x::LieElement{T}) where T<:Number = LieElement{T}(x.scmat, -x.element)
+-(x::AbstractElem{T}) where T<:Number = typeof(x)(x.scmat, -x.element)
 
 """
-    *(a::Int, x::LieElement)
+    *(a::Number, x::AbstractElem)
 
 Multiplication of an element of the Lie algebra by an integer.
 """
-function *(a::T, x::LieElement{T}) where T<:Number
-    return LieElement{T}(x.scmat, a * x.element)
+function *(a::T, x::AbstractElem{T}) where T<:Number
+    return typeof(x)(x.scmat, a * x.element)
 end
-*(x::LieElement, a::T) where T<:Number = a * x
-
-# """
-#     ÷(x::LieElement, a::Int)
-
-# Division of an element of the Lie algebra by an integer.
-
-# **Note: the remainder is discarded without any warning.**
-# """
-# function ÷(x::LieElement{T}, a::Int)
-#     return LieElement{T}(x.scmat, x.element .÷ a)
-# end
+*(x::AbstractElem, a::T) where T<:Number = a * x
 
 raw"""
-    getindex(x::LieElement, i::Int)
+    getindex(x::AbstractElem, i::Int)
 
 Return the coefficient of $x_i$ in `x`.
 """
-getindex(x::LieElement, i::Int) = x.element[i]
+getindex(x::AbstractElem, i::Int) = x.element[i]
 
 ## as algebra
 """
-    *(x::LieElement, y::LieElement)
+    *(x::LieElem, y::LieElem)
 
 Multiplication of two elements of the Lie algebra.
 """
-function *(x::LieElement{T}, y::LieElement{T}) where T<:Number
+function *(x::AbstractElem{T}, y::AbstractElem{T}) where T<:Number
     x.scmat === y.scmat || throw(ObjMatchError("Multiplication of elements of different algebras"))
     scmat = x.scmat
-    z = sum(x[ind] * y[ind2] * scmat[ind, ind2] 
-            for ind in x.element.nzind 
-                for ind2 in y.element.nzind)
-    return LieElement{T}(scmat, z)
+    z = spzeros(T, scmat.d)
+    for i in x.element.nzind, j in y.element.nzind
+        val = x[i] * y[j]
+        iszero(val) && continue
+        z += val * scmat[i, j]
+    end
+    return typeof(x)(scmat, z)
 end
 
-==(x::LieElement, y::LieElement) = iszero(x - y)
-iszero(x::LieElement) = iszero(x.element)
+==(x::AbstractElem, y::AbstractElem) = iszero(x - y)
+iszero(x::AbstractElem) = iszero(x.element)
 
-## Operations for EnvElement
+## Operations for EnvElem
 """
-    keys(x::EnvElement)
+    keys(x::AbstractEnvElem)
 
 Return the decomposition basis of `x`.
 """
-keys(x::EnvElement) = keys(x.element)
+keys(x::AbstractEnvElem) = keys(x.element)
 
 """
-    getindex(x::EnvElement, key::Tuple)
+    getindex(x::AbstractEnvElem, key::Tuple)
 
 Return the coefficient of `key` in `x`.
 """
-getindex(x::EnvElement, key::Tuple) = get(x.element, key, 0)
+getindex(x::AbstractEnvElem{T}, key::Tuple) where T = get(x.element, key, zero(T))
 
 """
-    zero(x::EnvElement)
+    zero(x::AbstractEnvElem)
 
 Return the zero element of the same algebra as `x`.
 """
-zero(x::EnvElement{T}) where T<:Number = EnvElement(x.scmat)
+zero(x::AbstractEnvElem{T}) where T<:Number = typeof(x)(x.scmat, Dict{Tuple, T}())
 
 """
-    unit(x::EnvElement)
+    unit(x::AbstractEnvElem)
 
 Return the identity element of the same algebra as `x`.
 """
-unit(x::EnvElement{T}) where T<:Number = EnvElement{T}(x.scmat, Dict{Tuple, T}(()=>1))
+unit(x::AbstractEnvElem{T}) where T<:Number = typeof(x)(x.scmat, Dict{Tuple, T}(()=>one(T)))
 
 """
-    +(x::EnvElement, y::EnvElement)
+    +(x::AbstractEnvElem, y::AbstractEnvElem)
 
 Addition of two elements of the universal enveloping algebra.
 """
-function +(x::EnvElement{T}, y::EnvElement{T}) where T<:Number
+function +(x::AbstractEnvElem{T}, y::AbstractEnvElem{T}) where T<:Number
     x.scmat === y.scmat || throw(ObjMatchError("Addition of elements of different enveloping algebras"))
     ele = Dict{Tuple, T}()
     for k in union(keys(x), keys(y))
@@ -146,15 +138,28 @@ function +(x::EnvElement{T}, y::EnvElement{T}) where T<:Number
             ele[k] = val
         end
     end
-    return EnvElement{T}(x.scmat, ele)
+    return typeof(x)(x.scmat, ele)
+end
+
+"""Addition without creating new memory"""
+function add!(x::AbstractEnvElem, y::AbstractEnvElem)
+    for k in keys(y)
+        val = x[k] + y[k]
+        if iszero(val)
+            delete!(x.element, k)
+        else
+            x.element[k] = val
+        end
+    end
+    return x
 end
 
 """
-    -(x::EnvElement, y::EnvElement)
+    -(x::AbstractEnvElem, y::AbstractEnvElem)
 
 Subtraction of two elements of the universal enveloping algebra.
 """
-function -(x::EnvElement{T}, y::EnvElement{T}) where T<:Number
+function -(x::AbstractEnvElem{T}, y::AbstractEnvElem{T}) where T<:Number
     x.scmat === y.scmat || throw(ObjMatchError("Subtraction of elements of different enveloping algebras"))
     ele = Dict{Tuple, T}()
     for k in union(keys(x), keys(y))
@@ -163,48 +168,47 @@ function -(x::EnvElement{T}, y::EnvElement{T}) where T<:Number
             ele[k] = val
         end
     end
-    return EnvElement(x.scmat, ele)
+    return typeof(x)(x.scmat, ele)
 end
 
 """
-    -(x::EnvElement)
+    -(x::AbstractEnvElem)
 
 Negation of an element of the universal enveloping algebra.
 """
--(x::EnvElement{T}) where T<:Number = EnvElement{T}(x.scmat, Dict{Tuple, T}(k => -v for (k, v) in x.element))
+-(x::AbstractEnvElem{T}) where T<:Number = typeof(x)(x.scmat, Dict{Tuple, T}(k => -v for (k, v) in x.element))
 
 """
-    *(a::Int, x::EnvElement)
+    *(a::Int, x::AbstractEnvElem)
 
 Multiplication of an element of the universal enveloping algebra by an integer.
 """
-function *(a::T, x::EnvElement{T}) where T<:Number
-    return EnvElement(x.scmat, Dict{Tuple, T}(k => a * v for (k, v) in x.element))
+function *(a::T, x::AbstractEnvElem{T}) where T<:Number
+    return typeof(x)(x.scmat, Dict{Tuple, T}(k => a * v for (k, v) in x.element))
 end
-*(x::EnvElement{T}, a::T) where T<:Number = a * x
+*(x::AbstractEnvElem{T}, a::T) where T<:Number = a * x
+
+"""multiplication without creating new memory"""
+function times!(x::AbstractEnvElem{T}, a::T) where T<:Number
+    for k in keys(x.element)
+        x.element[k] *= a
+    end
+    return x
+end    
 
 """
-    ÷(x::EnvElement, a::Int)
-
-Division of an element of the universal enveloping algebra by an integer.
-"""
-# function ÷(x::EnvElement, a::Int)
-#     return EnvElement(x.scmat, Dict{Tuple, Int}(k => v ÷ a for (k, v) in x.element))
-# end
-
-"""
-    ==(x::EnvElement, y::EnvElement)
+    ==(x::AbstractEnvElem, y::AbstractEnvElem)
 
 Test if two elements of the universal enveloping algebra are equal.
 """
-==(x::EnvElement, y::EnvElement) = iszero(x - y)
+==(x::AbstractEnvElem, y::AbstractEnvElem) = iszero(x - y)
 
 """
-    iszero(x::EnvElement)
+    iszero(x::AbstractEnvElem)
 
 Test if an element of the universal enveloping algebra is zero.
 """
-iszero(x::EnvElement) = all(iszero, values(x.element))
+iszero(x::AbstractEnvElem) = all(iszero, values(x.element))
 
 ## **PBW basis**
 
@@ -213,16 +217,16 @@ iszero(x::EnvElement) = all(iszero, values(x.element))
 # @inline tuplejoin(x, y, z...) = tuplejoin(tuplejoin(x, y), z...)
 
 """
-    mult(scmat::SCMat, x::Tuple{LieElement}, y::Tuple{LieElement})
+    mult(scmat::AbstractSCMat, x::Tuple, y::Tuple)
 
 Simplify the product of two basis elements of the universal enveloping algebra.
 """
-mult(scmat::SCMat, x::Tuple, y::Tuple) = simplify(scmat, tuplejoin(x, y))
+mult(scmat::AbstractSCMat, x::Tuple, y::Tuple) = simplify(scmat, tuplejoin(x, y))
 
 """
-    simplify(x::Tuple{LieElement})
+    simplify(scmat::SCMat, x::Tuple)
 
-Reduce a sequence of `LieElement` to a standard `EnvElement`.
+Reduce a sequence of indexes to the standard `EnvElem`.
 
 Basic rule: xᵢxⱼ = xⱼxᵢ + [xᵢ, xⱼ]
 
@@ -230,21 +234,23 @@ Example: (1, 3, 2, 1) => (1, 2, 3, 1) + (1, [3, 2], 1)
 """
 function simplify(scmat::SCMat{T}, x::Tuple) where T<:Number
     ind = findfirst(i -> x[i] > x[i+1], 1:length(x)-1)
-    isnothing(ind) && return EnvElement{T}(scmat, Dict{Tuple, T}(x=>1))
+    isnothing(ind) && return EnvElem(scmat, Dict{Tuple, T}(x=>one(T)))
     # decrease the inversion number by 1
     reducecase = simplify(scmat, (x[1:ind-1]..., x[ind+1], x[ind], x[ind+2:end]...))
     # decrease the length by 1
     ele = scmat[x[ind], x[ind+1]]
-    return sum([ele[i] * simplify(scmat, (x[1:ind-1]..., i, x[ind+2:end]...)) 
-                for i in ele.nzind]; init=reducecase)
+    for i in ele.nzind
+        add!(reducecase, times!(simplify(scmat, (x[1:ind-1]..., i, x[ind+2:end]...)), ele[i]))
+    end
+    return reducecase
 end
 
 """
-    *(x::EnvElement, y::EnvElement)
+    *(x::AbstractEnvElem, y::AbstractEnvElem)
 
 Multiplication of two elements of the universal enveloping algebra.
 """
-function *(x::EnvElement{T}, y::EnvElement{T}) where T<:Number
+function *(x::AbstractEnvElem{T}, y::AbstractEnvElem{T}) where T<:Number
     x.scmat === y.scmat || throw(ObjMatchError("Multiplication of elements of different enveloping algebras"))
     ele = zero(x)
     for k1 in keys(x), k2 in keys(y)
@@ -257,32 +263,44 @@ function *(x::EnvElement{T}, y::EnvElement{T}) where T<:Number
 end
 
 """
-    issortedbypbw(x::EnvElement)
+    issortedbypbw(x::AbstractEnvElem)
 
-Test if the key values of the `EnvElement` is sorted by PBW basis.
+Test if the key values of the `AbstractEnvElem` is sorted by PBW basis.
 """
-issortedbypbw(x::EnvElement) = all(issorted, keys(x.element))
+issortedbypbw(x::AbstractEnvElem) = all(issorted, keys(x.element))
 
 # Treat Lie algebra as a subalgebra of the Enveloping algebra.
-*(x::LieElement{T}, y::EnvElement{T}) where T<:Number = EnvElement(x) * y
-*(x::EnvElement{T}, y::LieElement{T}) where T<:Number = x * EnvElement(y)
-+(x::EnvElement{T}, y::LieElement{T}) where T<:Number = x + EnvElement(y)
-+(x::LieElement{T}, y::EnvElement{T}) where T<:Number = EnvElement(x) + y
--(x::EnvElement{T}, y::LieElement{T}) where T<:Number = x - EnvElement(y)
--(x::LieElement{T}, y::EnvElement{T}) where T<:Number = EnvElement(x) - y
+*(x::AbstractElem{T}, y::AbstractEnvElem{T}) where T<:Number = oftype(y, x) * y
+*(x::AbstractEnvElem{T}, y::AbstractElem{T}) where T<:Number = x * oftype(x, y)
++(x::AbstractEnvElem{T}, y::AbstractElem{T}) where T<:Number = x + oftype(x, y)
++(x::AbstractElem{T}, y::AbstractEnvElem{T}) where T<:Number = oftype(y, x) + y
+-(x::AbstractEnvElem{T}, y::AbstractElem{T}) where T<:Number = x - oftype(x, y)
+-(x::AbstractElem{T}, y::AbstractEnvElem{T}) where T<:Number = oftype(y, x) - y
+
+# element type
+eltype(::AbstractEnvElem{T}) where T = T
+eltype(::AbstractElem{T}) where T = T
+eltype(::AbstractSCMat{T}) where T = T
+eltype(::AlgebraBySC{T}) where T = T
+
+# dimension
+dim(x::AbstractEnvElem) = x.scmat.d
+dim(x::AbstractElem) = x.scmat.d
+dim(x::AbstractSCMat) = x.d
+dim(x::AlgebraBySC) = x.scmat.d
 
 # should be replaced by Symbolic.jl
 function show(io::IO, alg::AlgebraBySC)
-    txt = "Lie algebra of dimension $(alg.dim) with basis: " * join(string.(alg.basis), ", ")
+    txt = "Lie algebra of dimension $(dim(alg)) with basis: " * join(string.(alg.basis), ", ")
     print(io,  txt)
 end
 
-show(io::IO, x::LieElement) = print(io, sum(x.element .* x.scmat.syms))
+show(io::IO, x::AbstractElem) = print(io, sum(x.element .* x.scmat.syms))
 
-show(io::IO, scmat::SCMat) = print(io, "Structure constants of length $(scmat.dim)")
+show(io::IO, scmat::AbstractSCMat) = print(io, "Structure constants with dimension $(dim(scmat))")
 
 """
-    show(io::IO, x::EnvElement)
+    show(io::IO, x::EnvElem)
 
 Show an element of the universal enveloping algebra.
 
@@ -291,8 +309,8 @@ user should know that it represents the element defined by PBW ordering.
 
 Also, one can use `issortedbypbw` to test if the basis is a standard PBW basis.
 """
-function show(io::IO, x::EnvElement)
-    # warning: nonstandard ordering !
+function show(io::IO, x::AbstractEnvElem)
+    # warning: not standard ordering !
     dict, syms = x.element, x.scmat.syms
     key2sym(key) = prod(syms[i] for i in key)
     print(io, sum(val * key2sym(k) for (k, val) in dict))

@@ -1,49 +1,56 @@
 # Basic Types
+
+abstract type AbstractElem{T<:Number} end
+abstract type AbstractSCMat{T<:Number} end
+abstract type AbstractEnvElem{T<:Number} end
+
 """
     SCMat{T<:Number}
 
-Structure constants of a Lie algebra. 
+Structure constants of an algebra. 
 """
-struct SCMat{T<:Number} # <: AbstractArray
-    dim::Int
+struct SCMat{T<:Number} <: AbstractSCMat{T}
+    d::Int
     # Matrix{SparseVector}
-    mat::AbstractMatrix
+    mat::Matrix{SparseVector{T, Int}}
     syms::Vector{Num} # symbolics basis used to show the elements
 end
 
 function SCMat(mat::AbstractMatrix{K}) where K <: AbstractSparseVector{T} where T <: Number
-    dim = size(mat, 1)
-    dim == size(mat, 2) || throw(DimensionMismatch("The matrix is not square"))
-    syms = eval(Meta.parse("@variables " * join(["x$(map_subscripts(i))" for i in 1:dim], " ")))
-    return SCMat{T}(dim, mat, syms)
+    d = size(mat, 1)
+    d == size(mat, 2) || throw(DimensionMismatch("The matrix is not square"))
+    syms = eval(Meta.parse("@variables " * join(["x$(map_subscripts(i))" for i in 1:d], " ")))
+    return SCMat{T}(d, mat, syms)
 end
 
 """
-    LieElement{T<:Number}
+    LieElem{T<:Number}
 
 An element of the Lie algebra.
 """
-struct LieElement{T<:Number}
+struct LieElem{T<:Number} <: AbstractElem{T}
     scmat::SCMat{T}
     # vector of coefficients of $\{x_1,\cdots,x_n\}$
     element::SparseVector{T}
 end
 
 """
-    EnvElement{T<:Number}
+    EnvElem{T<:Number}
 
-An element of the universal enveloping algebra.
+An element of the universal enveloping algebra of a Lie algebra.
 """
-struct EnvElement{T<:Number}
+struct EnvElem{T<:Number} <: AbstractEnvElem{T}
     scmat::SCMat{T}
     # The decomposition basis of element
     # `keys(element)` is a tuple of indexes
     element::Dict{Tuple, T} # base => coefficience
 end
 """zero element"""
-EnvElement(scmat::SCMat{T}) where T<:Number = EnvElement{T}(scmat, Dict{Tuple, T}())
+EnvElem(scmat::SCMat{T}) where T<:Number = EnvElem{T}(scmat, Dict{Tuple, T}())
 """Initialize by a Lie element"""
-EnvElement(x::LieElement{T}) where T<:Number = EnvElement{T}(x.scmat, sparse2dict(x.element))
+EnvElem(x::LieElem{T}) where T<:Number = EnvElem{T}(x.scmat, sparse2dict(x.element))
+# (f::EnvElem{T})(x...) where T = EnvElem(x...)
+Base.convert(::Type{EnvElem{T}}, x::LieElem{T}) where T = EnvElem(x)
 
 """
     AlgebraBySC{T<:Number}
@@ -51,13 +58,12 @@ EnvElement(x::LieElement{T}) where T<:Number = EnvElement{T}(x.scmat, sparse2dic
 Define an algebra by structure constants.
 """
 struct AlgebraBySC{T<:Number}
-    dim::Int
     scmat::SCMat{T}
-    basis::Vector{LieElement{T}}
+    basis::Vector{LieElem{T}}
 end
 
 function AlgebraBySC(scmat::SCMat{T}) where T <: Number
-    dim = scmat.dim
-    basis = [LieElement(scmat, sparsevec([i], ones(T, 1), dim)) for i in 1:dim]
-    return AlgebraBySC{T}(dim, scmat, basis)
+    d = dim(scmat)
+    basis = [LieElem(scmat, sparsevec([i], ones(T, 1), d)) for i in 1:d]
+    return AlgebraBySC{T}(scmat, basis)
 end
