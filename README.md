@@ -1,9 +1,8 @@
 # SingularVectors
 
-[![][docs-stable-img]][docs-stable-url]
-[![][docs-dev-img]](docs-dev-url)
-[![][action-img]](action-url)
-[![][codecov-img]](codecov-url)
+[![][docs-dev-img]][docs-dev-url]
+[![][action-img]][action-url]
+[![][codecov-img]][codecov-url]
 
 Demo for implementation of Universal Enveloping Algebras, which can be used for finding singular vectors.
 
@@ -41,13 +40,9 @@ Notes:
 
 <!-- URLS -->
 
-[pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/Q/QRCode.svg
-[pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/report.html
 [action-img]: https://github.com/RexWzh/SingularVectors.jl/actions/workflows/CI.yml/badge.svg
 [action-url]: https://github.com/RexWzh/SingularVectors.jl/actions
 [codecov-img]: https://codecov.io/gh/RexWzh/SingularVectors.jl/branch/main/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/RexWzh/SingularVectors.jl?branch=master
-[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]: https://JuliaImages.github.io/QRCoders.jl/stable
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
-[docs-dev-url]: https://RexWzh.github.io/SingularVectors.jl/dev
+[docs-dev-url]: https://rexwzh.github.io/SingularVectors.jl/dev/
